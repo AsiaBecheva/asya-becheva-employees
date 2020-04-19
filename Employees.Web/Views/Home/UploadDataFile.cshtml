@@ -1,0 +1,27 @@
+﻿@model List<Employees.Web.Models.EmployeeViewModel>
+
+<div class="container">
+    <div style="height: 800px; overflow: auto">
+        <table class="table" id="table">
+            <thead>
+                <tr>
+                    <th>Employee ID #1</th>
+                    <th>Employee ID #2</th>
+                    <th>Project ID</th>
+                    <th>Days worked</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var result in Model)
+                {
+                <tr>
+                    <td>@result.FirstEmployeeID</td>
+                    <td>@result.SecondEmployeeID</td>
+                    <td>@result.ProjectID</td>
+                    <td>@result.DaysWorked</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

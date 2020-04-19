@@ -1,0 +1,39 @@
+﻿@*@using (Html.BeginForm("UploadDataFile", "Home", FormMethod.Post, new { @class = "form-horizontal", role = "form", enctype = "multipart/form-data" }))
+    {
+        <div class="row">
+            <div class="form-group">
+                <label class="control-label col-md-offset-2 col-md-2" for="TextUpload">Upload txt file</label>
+                <div class="col-md-3">
+                    <input type="file" name="TextUpload" class="form-control" />
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group">
+                <div class="col-md-offset-6 col-md-3">
+                    <input type="submit" class="btn btn-primary" />
+                </div>
+            </div>
+        </div>
+    }*@
+
+@{
+    ViewBag.Title = "UploadFile";
+}
+
+<h2>UploadFile</h2>
+
+@using (Html.BeginForm("UploadDataFile", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+
+    <div>
+        @Html.TextBox("file", "", new { type = "file" }) <br />
+
+        <input type="submit" value="Upload" />
+
+        @ViewBag.Message
+
+    </div>
+
+
+} 
