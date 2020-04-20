@@ -22,19 +22,28 @@
             if (file != null && file.ContentLength > 0)
                 try
                 {
-                    BinaryReader b = new BinaryReader(file.InputStream);
-                    byte[] binData = b.ReadBytes(file.ContentLength);
-
-                    string textFile = System.Text.Encoding.UTF8.GetString(binData);
-                    string path = Server.MapPath("~/Files/EmployeesData.txt");
-                    using (StreamWriter sw = System.IO.File.CreateText(path))
+                    List<string> data = new List<string>();
+                    using (StreamReader reader = new StreamReader(file.InputStream))
                     {
-                        sw.WriteLine(textFile);
+                        while (!reader.EndOfStream)
+                        {
+                            data.Add(reader.ReadLine());
+                        }
                     }
+
+                    //BinaryReader b = new BinaryReader(file.InputStream);
+                    //byte[] binData = b.ReadBytes(file.ContentLength);
+
+                    //string textFile = System.Text.Encoding.UTF8.GetString(binData);
+                    //string path = Server.MapPath("~/Files/EmployeesData.txt");
+                    //using (StreamWriter sw = System.IO.File.CreateText(path))
+                    //{
+                    //    sw.WriteLine(textFile);
+                    //}
 
                     EmployeeService employeeService = new EmployeeService();
 
-                    var employees = employeeService.FillProjectHistory(path);
+                    var employees = employeeService.FillProjectHistory(data);
                     var emplooyeesCombination = employeeService.MatchCommonWorkingDays(employees, true);
 
                     var result = emplooyeesCombination.OrderByDescending(k => k.Value);//.OrderByDescending(k => k.Value).FirstOrDefault();

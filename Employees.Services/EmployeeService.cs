@@ -4,7 +4,6 @@
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using System.IO;
 
     public class EmployeeService
     {
@@ -60,41 +59,36 @@
             employeesHours[employeesCombination] += daysDiff;
         }
 
-        public Dictionary<string, List<EmployeeHistory>> FillProjectHistory(string textFile)
+        public Dictionary<string, List<EmployeeHistory>> FillProjectHistory(IEnumerable<string> lines)
         {
             Dictionary<string, List<EmployeeHistory>> history = new Dictionary<string, List<EmployeeHistory>>();
 
-            if (File.Exists(textFile))
+            foreach (var line in lines)
             {
-                string[] lines = File.ReadAllLines(textFile);
+                string[] parts = Array.ConvertAll(line.Split(','), p => p.Trim());
 
-                foreach (var line in lines)
+                if (!DateTime.TryParse(parts[3], out DateTime dateTo))
                 {
-                    string[] parts = Array.ConvertAll(line.Split(','), p => p.Trim());
-
-                    if (!DateTime.TryParse(parts[3], out DateTime dateTo))
-                    {
-                        dateTo = DateTime.Now;
-                    }
-                    else
-                    {
-                        dateTo = DateTime.ParseExact(parts[3], "yyyy-MM-dd", CultureInfo.InvariantCulture);
-                    }
-
-                    var projectID = parts[1];
-
-                    if (!history.ContainsKey(projectID))
-                    {
-                        history[projectID] = new List<EmployeeHistory>();
-                    }
-
-                    history[projectID].Add(new EmployeeHistory
-                    {
-                        EmpId = parts[0],
-                        StartDate = DateTime.ParseExact(parts[2], "yyyy-MM-dd", CultureInfo.InvariantCulture),
-                        EndDate = dateTo
-                    });
+                    dateTo = DateTime.Now;
                 }
+                else
+                {
+                    dateTo = DateTime.ParseExact(parts[3], "yyyy-MM-dd", CultureInfo.InvariantCulture);
+                }
+
+                var projectID = parts[1];
+
+                if (!history.ContainsKey(projectID))
+                {
+                    history[projectID] = new List<EmployeeHistory>();
+                }
+
+                history[projectID].Add(new EmployeeHistory
+                {
+                    EmpId = parts[0],
+                    StartDate = DateTime.ParseExact(parts[2], "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    EndDate = dateTo
+                });
             }
 
             return history;

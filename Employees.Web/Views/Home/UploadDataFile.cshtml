@@ -1,8 +1,14 @@
 ﻿@model List<Employees.Web.Models.EmployeeViewModel>
 
+<style>
+    table.dataTable tbody tr.even {
+        background-color: lightgoldenrodyellow;
+    }
+</style>
+
 <div class="container">
-    <div style="height: 800px; overflow: auto">
-        <table class="table" id="table">
+    <div>
+        <table id="employeeHistory">
             <thead>
                 <tr>
                     <th>Employee ID #1</th>
@@ -14,14 +20,31 @@
             <tbody>
                 @foreach (var result in Model)
                 {
-                <tr>
-                    <td>@result.FirstEmployeeID</td>
-                    <td>@result.SecondEmployeeID</td>
-                    <td>@result.ProjectID</td>
-                    <td>@result.DaysWorked</td>
-                </tr>
+                    <tr>
+                        <td>@result.FirstEmployeeID</td>
+                        <td>@result.SecondEmployeeID</td>
+                        <td>@result.ProjectID</td>
+                        <td>@result.DaysWorked</td>
+                    </tr>
                 }
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+
+    $(document).ready(function () {
+        $('#employeeHistory').DataTable({
+            order: [[3, 'desc']],
+            responsive: {
+                details: {
+                    type: 'column',
+                    target: 1
+                }
+            },
+            pagingType: 'simple',
+            select: true,
+        });
+    });
+</script>

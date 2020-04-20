@@ -3,6 +3,7 @@
     using System.Linq;
     using System;
     using Employees.Services;
+    using System.IO;
 
     public class Program
     {
@@ -11,7 +12,8 @@
         public static void Main(string[] args)
         {
             EmployeeService employeeService = new EmployeeService();
-            var employees = employeeService.FillProjectHistory(textFile);
+            string[] lines = File.ReadAllLines(textFile);
+            var employees = employeeService.FillProjectHistory(lines);
             var emplooyeesCombination = employeeService.MatchCommonWorkingDays(employees, false);
 
             var result = emplooyeesCombination.OrderByDescending(k => k.Value).FirstOrDefault();
