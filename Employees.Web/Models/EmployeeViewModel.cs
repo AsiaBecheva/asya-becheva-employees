@@ -2,11 +2,11 @@
 {
     public class EmployeeViewModel
     {
-        public string FirstEmployeeID { get; set; }
+        public int FirstEmployeeID { get; set; }
 
-        public string SecondEmployeeID { get; set; }
+        public int SecondEmployeeID { get; set; }
 
-        public string ProjectID { get; set; }
+        public int ProjectID { get; set; }
 
         public long DaysWorked { get; set; }
     }

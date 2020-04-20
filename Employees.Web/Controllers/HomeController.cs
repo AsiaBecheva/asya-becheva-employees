@@ -20,6 +20,12 @@
         public ActionResult UploadDataFile(HttpPostedFileBase file)
         {
             if (file != null && file.ContentLength > 0)
+            {
+                if (file.ContentType != "text/plain")
+                {
+                    ViewBag.ErrorMessage = "Provided file format can only be .txt!";
+                    return this.View();
+                }
                 try
                 {
                     List<string> data = new List<string>();
@@ -30,35 +36,22 @@
                             data.Add(reader.ReadLine());
                         }
                     }
-
-                    //BinaryReader b = new BinaryReader(file.InputStream);
-                    //byte[] binData = b.ReadBytes(file.ContentLength);
-
-                    //string textFile = System.Text.Encoding.UTF8.GetString(binData);
-                    //string path = Server.MapPath("~/Files/EmployeesData.txt");
-                    //using (StreamWriter sw = System.IO.File.CreateText(path))
-                    //{
-                    //    sw.WriteLine(textFile);
-                    //}
-
                     EmployeeService employeeService = new EmployeeService();
 
                     var employees = employeeService.FillProjectHistory(data);
-                    var emplooyeesCombination = employeeService.MatchCommonWorkingDays(employees, true);
-
-                    var result = emplooyeesCombination.OrderByDescending(k => k.Value);//.OrderByDescending(k => k.Value).FirstOrDefault();
+                    var emplooyeesCombination = employeeService.MatchCommonWorkingDays(employees, true).OrderByDescending(k => k.Value);
 
                     List<EmployeeViewModel> employeesHistory = new List<EmployeeViewModel>();
-                    foreach (var entry in result)
+                    foreach (var entry in emplooyeesCombination)
                     {
                         string[] colleagues = Array.ConvertAll(entry.Key.Split(':'), p => p.Trim());
 
-                        EmployeeViewModel employeeViewModel = new EmployeeViewModel
+                    EmployeeViewModel employeeViewModel = new EmployeeViewModel
                         {
-                            FirstEmployeeID = colleagues[0],
-                            SecondEmployeeID = colleagues[1],
+                            FirstEmployeeID = int.Parse(colleagues[0]),
+                            SecondEmployeeID = int.Parse(colleagues[1]),
                             DaysWorked = entry.Value,
-                            ProjectID = colleagues[2]
+                            ProjectID = int.Parse(colleagues[2])
                         };
 
                         employeesHistory.Add(employeeViewModel);
@@ -67,16 +60,16 @@
                     return View(employeesHistory);
                 }
                 catch (Exception ex)
-
                 {
-                    ViewBag.Message = "ERROR:" + ex.Message.ToString();
+                    ViewBag.ErrorMessage = $"ERROR: {ex.Message}!";
                 }
+            }
             else
             {
-                ViewBag.Message = "You have not specified a file.";
+                ViewBag.ErrorMessage = "You have not specified a file to be uploaded.";
             }
 
-            return View();
+            return this.View();
         }
     }
 }

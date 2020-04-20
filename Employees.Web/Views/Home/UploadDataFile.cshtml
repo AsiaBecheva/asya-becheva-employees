@@ -6,34 +6,42 @@
     }
 </style>
 
-<div class="container">
-    <div>
-        <table id="employeeHistory">
-            <thead>
-                <tr>
-                    <th>Employee ID #1</th>
-                    <th>Employee ID #2</th>
-                    <th>Project ID</th>
-                    <th>Days worked</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var result in Model)
-                {
+@if (string.IsNullOrEmpty(ViewBag.ErrorMessage))
+{
+    <div class="container">
+        <div>
+            <table id="employeeHistory">
+                <thead>
                     <tr>
-                        <td>@result.FirstEmployeeID</td>
-                        <td>@result.SecondEmployeeID</td>
-                        <td>@result.ProjectID</td>
-                        <td>@result.DaysWorked</td>
+                        <th>Employee ID #1</th>
+                        <th>Employee ID #2</th>
+                        <th>Project ID</th>
+                        <th>Days worked</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var result in Model)
+                    {
+                        <tr>
+                            <td>@result.FirstEmployeeID</td>
+                            <td>@result.SecondEmployeeID</td>
+                            <td>@result.ProjectID</td>
+                            <td>@result.DaysWorked</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+}
+else
+{
+    <div class="alert alert-danger" role="alert">
+         @ViewBag.ErrorMessage <a href="@Url.Action("Index", "Home")" class="alert-link">Go back to home page</a>.
+    </div>
+}
 
 <script>
-
     $(document).ready(function () {
         $('#employeeHistory').DataTable({
             order: [[3, 'desc']],
