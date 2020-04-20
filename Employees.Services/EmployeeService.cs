@@ -4,6 +4,7 @@
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Linq;
 
     public class EmployeeService
     {
@@ -73,7 +74,7 @@
                 }
                 else
                 {
-                    dateTo = DateTime.ParseExact(parts[3], "yyyy-MM-dd", CultureInfo.InvariantCulture);
+                    dateTo = ParseDateCustom(parts[3]);
                 }
 
                 var projectID = parts[1];
@@ -86,12 +87,27 @@
                 history[projectID].Add(new EmployeeHistory
                 {
                     EmpId = parts[0],
-                    StartDate = DateTime.ParseExact(parts[2], "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    StartDate = ParseDateCustom(parts[2]),
                     EndDate = dateTo
                 });
             }
 
             return history;
+        }
+
+        private DateTime ParseDateCustom(string date)
+        {
+            var dateTimeParsed = new DateTime();
+            var cultureInfo = new CultureInfo("bg-BG");
+            date = date.Trim();
+
+            var dateFormats = new[] { "M-d-yyyy", "d-M-yyyy", "dd-MM-yyyy", "MM-dd-yyyy", "yyyy-M-d", "yyyy-d-M", "yyyy-dd-MM", "yyyy-MM-dd",
+                "M.d.yyyy", "d.M.yyyy", "dd.MM.yyyy", "MM.dd.yyyy", "yyyy.M.d", "yyyy.d.M", "yyyy.dd.MM", "yyyy.MM.dd",
+                "M/d/yyyy", "d/M/yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy/M/d", "yyyy/d/M", "yyyy/dd/MM/yyyy", "yyyy/MM/dd"
+            }.Union(cultureInfo.DateTimeFormat.GetAllDateTimePatterns()).ToArray();
+            dateTimeParsed = DateTime.ParseExact(date, dateFormats, cultureInfo, DateTimeStyles.AssumeLocal);
+
+            return dateTimeParsed;
         }
     }
 }
