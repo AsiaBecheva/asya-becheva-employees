@@ -1,13 +1,14 @@
 ﻿namespace Employees.Services
 {
     using Employees.Data;
+    using Employees.Services.Contracts;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Globalization;
     using System.Linq;
 
-    public class EmployeeService
+    public class EmployeeService : IEmployeeService
     {
         /// <summary>
         /// Reads the input lines and adds them to a convenient dictionary
@@ -128,7 +129,7 @@
             int projectId,
             bool getProjectTotalDays)
         {
-            //  Get the total number of days that the employees worked together.
+            // Get the total number of days that the employees worked together.
             // Calculates correctly even for leap years.
             var startCommonDate = new DateTime(Math.Max(empl1.StartDate.Ticks, empl2.StartDate.Ticks));
             var endCommonDate = new DateTime(Math.Min(empl1.EndDate.Ticks, empl2.EndDate.Ticks));

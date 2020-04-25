@@ -1,6 +1,7 @@
 ﻿namespace Employees.Web.Controllers
 {
     using Employees.Services;
+    using Employees.Services.Contracts;
     using Employees.Web.Models;
     using System;
     using System.Collections.Generic;
@@ -11,6 +12,13 @@
     
     public class HomeController : Controller
     {
+        private readonly IEmployeeService employeeService;
+
+        public HomeController(IEmployeeService employeeService)
+        {
+            this.employeeService = employeeService;
+        }
+
         public ActionResult Index()
         {
             return View();
@@ -36,7 +44,6 @@
                             data.Add(reader.ReadLine());
                         }
                     }
-                    EmployeeService employeeService = new EmployeeService();
 
                     var employees = employeeService.FillProjectHistory(data);
                     var emplooyeesCombination = employeeService.MatchCommonWorkingDays(employees, true).OrderByDescending(k => k.Value);
