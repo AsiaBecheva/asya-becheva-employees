@@ -46,23 +46,15 @@
                     }
 
                     var employees = employeeService.FillProjectHistory(data);
-                    var emplooyeesCombination = employeeService.MatchCommonWorkingDays(employees, true).OrderByDescending(k => k.Value);
+                    var employeePairWithMostCommonDays = employeeService.GetMostCommonDaysEmployeesPair(employees);
 
-                    List<EmployeeViewModel> employeesHistory = new List<EmployeeViewModel>();
-                    foreach (var entry in emplooyeesCombination)
+                    var employeesHistory = employeePairWithMostCommonDays.Select(e => new EmployeeViewModel
                     {
-                        string[] colleagues = Array.ConvertAll(entry.Key.Split(':'), p => p.Trim());
-
-                    EmployeeViewModel employeeViewModel = new EmployeeViewModel
-                        {
-                            FirstEmployeeID = int.Parse(colleagues[0]),
-                            SecondEmployeeID = int.Parse(colleagues[1]),
-                            DaysWorked = entry.Value,
-                            ProjectID = int.Parse(colleagues[2])
-                        };
-
-                        employeesHistory.Add(employeeViewModel);
-                    }
+                        FirstEmployeeID = e.EmployeeId1,
+                        SecondEmployeeID = e.EmployeeId2,
+                        DaysWorked = e.DaysWorkingTogether,
+                        ProjectID = e.ProjectId
+                    }).ToList();
 
                     return View(employeesHistory);
                 }

@@ -11,13 +11,13 @@
     public class EmployeeService : IEmployeeService
     {
         /// <summary>
-        /// Reads the input lines and adds them to a convenient dictionary
+        /// Reads the input lines and adds them to a list
         /// </summary>
         /// <param name="lines">All the data lines in the provided .txt file</param>
-        /// <returns>dictionary with projectId as key and collection of EmployeeHistory as value</returns>
-        public Dictionary<int, List<EmployeeHistory>> FillProjectHistory(IEnumerable<string> lines)
+        /// <returns>Collection containing combination of projectId, employee id, start date and end date</returns>
+        public IEnumerable<ProjectHistoryEntry> FillProjectHistory(IEnumerable<string> lines)
         {
-            Dictionary<int, List<EmployeeHistory>> history = new Dictionary<int, List<EmployeeHistory>>();
+            var projectsData = new List<ProjectHistoryEntry>();
 
             foreach (var line in lines)
             {
@@ -34,15 +34,8 @@
                     {
                         dateTo = ParseDateCustom(data[3]);
                     }
-                  
-                    // Create new EmployeeHistory list if this is the first time the projectId appears
-                    if (!history.ContainsKey(projectID))
-                    {
-                        history[projectID] = new List<EmployeeHistory>();
-                    }
 
-                    history[projectID].Add(
-                        new EmployeeHistory(int.Parse(data[0]), ParseDateCustom(data[2]), dateTo));
+                    projectsData.Add(new ProjectHistoryEntry(projectID, int.Parse(data[0]), ParseDateCustom(data[2]), dateTo));
                 }
                 catch (Exception ex)
                 {
@@ -51,7 +44,80 @@
                 }
             }
 
-            return history;
+            return projectsData;
+        }
+
+        /// <summary>
+        /// Get the total days of employee pairs working on various projects and return only data for the top employee couple
+        /// </summary>
+        /// <param name="history">All the collected employment history entered from the .txt file</param>
+        /// <returns>Collection of common days based on project and pair of employee ids</returns>
+        public IEnumerable<EmployeePairData> GetMostCommonDaysEmployeesPair(IEnumerable<ProjectHistoryEntry> history)
+        {
+            var emplWorkingTogetherInProject = EmployeesWorkingTogetherInCommonProjects(history);
+
+            // If we have entires emplId 1 - emplId 5, and emplId 5 - emplId 1, one of them is removed
+            var uniqueEmployeePairs = emplWorkingTogetherInProject.Where(e => e.EmployeeId1 < e.EmployeeId2);
+
+            var totalDays = new List<EmployeesTotalDays>();
+            foreach (var entry in uniqueEmployeePairs)
+            {
+                // Get the current employee pair entry from the totalHours collection
+                var currentPairTotalHours = totalDays.FirstOrDefault(d => d.EmployeeId1 == entry.EmployeeId1 && d.EmployeeId2 == entry.EmployeeId2);
+
+                if (currentPairTotalHours == null)
+                {
+                    currentPairTotalHours = new EmployeesTotalDays(entry.EmployeeId1, entry.EmployeeId2);
+                    totalDays.Add(currentPairTotalHours);
+                };
+
+                // Add days from current project to total days the employee pair worked together
+                currentPairTotalHours.TotalDaysTogether += entry.DaysWorkingTogether;
+            }
+
+            var employeePairWithMostDaysHistory = totalDays.OrderByDescending(etd => etd.TotalDaysTogether).FirstOrDefault();
+
+            // Get full project history data only for employee pair with most working days together
+            var allCommonProjectsHistory = uniqueEmployeePairs
+                .Where(td => td.EmployeeId1 == employeePairWithMostDaysHistory.EmployeeId1 && td.EmployeeId2 == employeePairWithMostDaysHistory.EmployeeId2);
+
+            return allCommonProjectsHistory;
+        }
+
+        // Return the employees working together in the same project
+        private IEnumerable<EmployeePairData> EmployeesWorkingTogetherInCommonProjects(IEnumerable<ProjectHistoryEntry> history)
+        {
+            var emplWorkingTogetherInProject = history.Join(
+               history,
+               e1 => e1.ProjectId,
+               e2 => e2.ProjectId,
+               (e1, e2) => new { e1, e2 })
+               .Where(o => o.e1.EmployeeId != o.e2.EmployeeId && AreDatesOverlapping(o.e1, o.e2))
+               .Select(r => new EmployeePairData(r.e1.ProjectId, r.e1.EmployeeId, r.e2.EmployeeId, GetDaysDiff(r.e1, r.e2)));
+
+            if (!emplWorkingTogetherInProject.Any())
+            {
+                throw new Exception("No employee pair has worked together on the same project at the same time");
+            }
+
+            return emplWorkingTogetherInProject;
+        }
+
+        private bool AreDatesOverlapping(ProjectHistoryEntry first, ProjectHistoryEntry second)
+        {
+            return first.StartDate < second.EndDate && first.EndDate > second.StartDate;
+        }
+
+        private long GetDaysDiff(ProjectHistoryEntry empl1, ProjectHistoryEntry empl2)
+        {
+            // Get the total number of days that the employees worked together.
+            // Calculates correctly even for leap years.
+            var startCommonDate = new DateTime(Math.Max(empl1.StartDate.Ticks, empl2.StartDate.Ticks));
+            var endCommonDate = new DateTime(Math.Min(empl1.EndDate.Ticks, empl2.EndDate.Ticks));
+
+            // 1 is added because we need to include the end day. E.g. 10 April to 11 April means people worked together 2 days
+            long daysDiff = (endCommonDate - startCommonDate).Days + 1;
+            return daysDiff;
         }
 
         /// <summary>
@@ -75,79 +141,6 @@
             }
 
             return data;
-        }
-
-        /// <summary>
-        /// 1) Get the total hours of unique combination of "empl1Id:empl2Id:projectId"
-        /// 2) Get the total hours of unique combination of "empl1Id:empl2Id"
-        /// </summary>
-        /// <param name="history">All the collected employment history based on project</param>
-        /// <param name="getTotalWorkingDays">If true, executes 1, else executes 2</param>
-        /// <returns>Total common working days between two employees. It can either be for all projects or only for specific project</returns>
-        public Dictionary<string, long> MatchCommonWorkingDays(
-            Dictionary<int, List<EmployeeHistory>> history, 
-            bool getTotalWorkingDays)
-        {
-            Dictionary<string, long> employeesHours = new Dictionary<string, long>();
-            foreach (var entry in history)
-            {
-                foreach (var empl1 in entry.Value)
-                {
-                    // When iterating all the employees of project history, we need to filter all entries with current employee id
-                    // We don't want to have entries such as emplId1 = 10 and emplId = 10
-                    var employeesWithoutCurrentOne = entry.Value.Where(e => e.EmpId != empl1.EmpId);
-
-                    foreach (var empl2 in employeesWithoutCurrentOne)
-                    {
-                        // check if the two employees have days where they worked together
-                        bool overlap = empl1.StartDate < empl2.EndDate && empl1.EndDate > empl2.StartDate;
-
-                        if (overlap)
-                        {
-                            // Add the data if the employees worked together on a project
-                            AddEmployeesDaysEntry(employeesHours, empl1, empl2, entry.Key, getTotalWorkingDays);
-                        }
-                    }
-                }
-            }
-
-            return employeesHours;
-        }
-
-        /// <summary>
-        /// Add number of days that employees worked together
-        /// </summary>
-        /// <param name="employeesHours">Collection of data for all hours added</param>
-        /// <param name="empl1">First employee data for specific project</param>
-        /// <param name="empl2">Second employee data for specific project</param>
-        /// <param name="projectId">ProjectId for which the employees worked together</param>
-        /// <param name="getProjectTotalDays">Flag to either get all days for all projects. Or only hours for one project</param>
-        private void AddEmployeesDaysEntry(
-            Dictionary<string, long> employeesHours,
-            EmployeeHistory empl1, 
-            EmployeeHistory empl2, 
-            int projectId,
-            bool getProjectTotalDays)
-        {
-            // Get the total number of days that the employees worked together.
-            // Calculates correctly even for leap years.
-            var startCommonDate = new DateTime(Math.Max(empl1.StartDate.Ticks, empl2.StartDate.Ticks));
-            var endCommonDate = new DateTime(Math.Min(empl1.EndDate.Ticks, empl2.EndDate.Ticks));
-            int daysDiff = (endCommonDate - startCommonDate).Days;
-
-            // Stores the key for the dictionary in the format "emplId1:emplId2(:projId)"
-            var employeesCombination = empl1.EmpId + ":" + empl2.EmpId;
-            if (getProjectTotalDays)
-            {
-                employeesCombination += ":" + projectId;
-            }
-            // Add a clear counter for all the commomn days
-            if (!employeesHours.ContainsKey(employeesCombination))
-            {
-                employeesHours[employeesCombination] = 0;
-            }
-
-            employeesHours[employeesCombination] += daysDiff;
         }
 
         private DateTime ParseDateCustom(string date)

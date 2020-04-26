@@ -5,8 +5,8 @@
 
     public interface IEmployeeService
     {
-        Dictionary<int, List<EmployeeHistory>> FillProjectHistory(IEnumerable<string> lines);
+        IEnumerable<ProjectHistoryEntry> FillProjectHistory(IEnumerable<string> lines);
 
-        Dictionary<string, long> MatchCommonWorkingDays(Dictionary<int, List<EmployeeHistory>> history, bool getTotalWorkingDays);
+        IEnumerable<EmployeePairData> GetMostCommonDaysEmployeesPair(IEnumerable<ProjectHistoryEntry> history);
     }
 }

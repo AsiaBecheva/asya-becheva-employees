@@ -14,13 +14,11 @@
             EmployeeService employeeService = new EmployeeService();
             string[] lines = File.ReadAllLines(textFile);
             var employees = employeeService.FillProjectHistory(lines);
-            var emplooyeesCombination = employeeService.MatchCommonWorkingDays(employees, false);
-
-            var result = emplooyeesCombination.OrderByDescending(k => k.Value).FirstOrDefault();
-
-            string[] colleagues = Array.ConvertAll(result.Key.Split(':'), p => p.Trim());
-            Console.WriteLine($"Colleague with ID {colleagues[0]} has worked together with colleague with ID {colleagues[1]}" +
-                $" for total of {result.Value} days.");
+            var result = employeeService.GetMostCommonDaysEmployeesPair(employees);
+            var employeeId1 = result.FirstOrDefault()?.EmployeeId1;
+            var employeeId2 = result.FirstOrDefault()?.EmployeeId2;
+            Console.WriteLine($"Colleague with ID {employeeId1} has worked together with colleague with ID {employeeId2}" +
+                $" for total of {result.Sum(r => r.DaysWorkingTogether)} days.");
         }
     }
 }
